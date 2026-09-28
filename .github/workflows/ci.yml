@@ -56,6 +56,7 @@ jobs:
             CONFIG_REPRODUCIBLE_DEBUG_INFO=y
 
             CONFIG_PACKAGE_luci=y
+            CONFIG_PACKAGE_kmod-tun=y
           EOF
           make defconfig
 
@@ -144,3 +145,50 @@ jobs:
           files: |
             bin/targets/qualcommax/ipq50xx/sha256sums
             bin/targets/qualcommax/ipq50xx/*.*
+
+  gh-pages:
+    needs: [ build ]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout gh-pages
+        uses: actions/checkout@v4
+        with:
+          path: 'gh-pages'
+          ref: 'gh-pages'
+          fetch-depth: 0
+
+      - name: Configure the git user
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+
+      - name: Download bin from artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: bin-qualcommax-ipq50xx
+          path: bin/
+
+      - name: Copy contents
+        run: |
+          VI="$(find bin -name 'versions.buildinfo' | head -n1)"
+          [ -z "$VI" ] && VI="$(find bin -name 'version.buildinfo' | head -n1)"
+          test -n "$VI" || { echo "no versions.buildinfo in artifact"; find bin -maxdepth 4 | head -40; exit 1; }
+          BASE="$(dirname "$VI")"
+          version="$(cat "$VI")"
+          echo "BASE=$BASE version=$version"
+          mkdir -p "gh-pages/${GITHUB_REF_NAME}/${version}/"
+          cp -avr "$BASE/packages/"* "gh-pages/${GITHUB_REF_NAME}/${version}/"
+          echo "$version" > "gh-pages/${GITHUB_REF_NAME}/latest"
+
+      - name: Commit
+        run: |
+          cd gh-pages
+          git add -A
+          git commit -m "Add: ${GITHUB_REF_NAME} packages feed" || echo "nothing to commit"
+
+      - name: Publish
+        run: |
+          cd gh-pages
+          git push origin gh-pages -f
