@@ -36,6 +36,13 @@ jobs:
           echo "ci-$(date -d "${TIME}" -u +'%Y%m%d-%H%M%S')-${GITHUB_SHA:0:8}" >version
           sed -i "s|%U/targets/%S/packages|https://${OWNER}.github.io/${REPO}/${GITHUB_REF_NAME}/%R|" include/feeds.mk
 
+      - name: Add UA3F package
+        run: |
+          git clone --depth=1 https://github.com/SunBK201/UA3F.git package/ua3f
+          ls package/ua3f | head -5
+          ./scripts/feeds update -a >/dev/null 2>&1 || true
+          ./scripts/feeds install -a -p packages >/dev/null 2>&1 || true
+
       - name: Update and install feeds
         run: |
           ./scripts/feeds update -a
@@ -57,6 +64,7 @@ jobs:
 
             CONFIG_PACKAGE_luci=y
             CONFIG_PACKAGE_kmod-tun=y
+            CONFIG_PACKAGE_ua3f=y
           EOF
           make defconfig
 
