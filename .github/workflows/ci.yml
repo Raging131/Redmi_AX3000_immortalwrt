@@ -43,6 +43,11 @@ jobs:
           ./scripts/feeds update -a >/dev/null 2>&1 || true
           ./scripts/feeds install -a -p packages >/dev/null 2>&1 || true
 
+      - name: Add OpenClash package
+        run: |
+          git clone --depth=1 https://github.com/vernesong/OpenClash.git package/openclash
+          test -f package/openclash/Makefile
+
       - name: Update and install feeds
         run: |
           ./scripts/feeds update -a
@@ -65,6 +70,11 @@ jobs:
             CONFIG_PACKAGE_luci=y
             CONFIG_PACKAGE_kmod-tun=y
             CONFIG_PACKAGE_ua3f=y
+            CONFIG_PACKAGE_luci-app-openclash=y
+            CONFIG_PACKAGE_curl=y
+            CONFIG_PACKAGE_zerotier=y
+            CONFIG_PACKAGE_etherwake=y
+            CONFIG_LUCI_LANG_zh_Hans=y
           EOF
           make defconfig
 
@@ -84,6 +94,16 @@ jobs:
         run: |
           make -j$(nproc) IGNORE_ERRORS=1
 
+      - name: Build OpenClash core binary (upx)
+        run: |
+          set -euo pipefail
+          sudo apt install -y upx-ucl
+          VER="v1.19.12"
+          curl -fsSL "https://github.com/MetaCubeX/mihomo/releases/download/${VER}/mihomo-linux-arm64-${VER}.gz" | gunzip > clash_meta
+          chmod 755 clash_meta
+          upx --best --lzma clash_meta
+          ls -la clash_meta
+
       - name: Upload bin to artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -95,6 +115,12 @@ jobs:
         with:
           name: dl
           path: dl/*
+
+      - name: Upload core image to artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: openclash-core
+          path: clash_meta
 
   release:
     needs: [ build ]
@@ -111,10 +137,12 @@ jobs:
           name: dl
           path: dl/
 
-      - name: Download bin from artifacts
+          path: bin/targets/qualcommax/ipq50xx/
+
+      - name: Download core binary from artifacts
         uses: actions/download-artifact@v4
         with:
-          name: bin-qualcommax-ipq50xx
+          name: openclash-core
           path: bin/targets/qualcommax/ipq50xx/
 
       - name: Generate release informations
