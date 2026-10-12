@@ -45,7 +45,8 @@ jobs:
 
       - name: Add OpenClash package
         run: |
-          git clone --depth=1 https://github.com/vernesong/OpenClash.git package/openclash
+          git clone --depth=1 https://github.com/vernesong/OpenClash.git /tmp/oc
+          cp -r /tmp/oc/luci-app-openclash package/openclash
           test -f package/openclash/Makefile
 
       - name: Update and install feeds
