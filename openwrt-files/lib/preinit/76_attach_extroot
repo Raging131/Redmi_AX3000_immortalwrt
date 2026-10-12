@@ -1,10 +1,13 @@
-# Attach the spare "overlay" mtd as UBI before mount_root evaluates extroot.
-# The volume then appears as /dev/ubi1_0 (ubi0 is the booted rootfs UBI),
-# matching the is_rootfs entry in /etc/config/fstab.
+# Attach the spare "overlay" mtd as UBI before mount_root evaluates extroot,
+# so /dev/ubi1_0 exists for the is_rootfs entry in /etc/config/fstab.
+# Pure shell field splitting - no sed/awk escaping pitfalls.
 attach_extroot_volume() {
-	local idx
+	local idx line
 	[ -e /dev/ubi1_0 ] && return 0
-	idx=$(\sed -n 's/\^(\[0-9]*\):.*"overlay".*/\1/p' /proc/mtd | head -n1)
+	line=$(grep '"overlay"' /proc/mtd | head -n1)
+	[ -n "$line" ] || return 0
+	idx=${line#mtd}
+	idx=${idx%%:*}
 	[ -n "$idx" ] || return 0
 	ubiattach -m "$idx" >/dev/null 2>&1
 }
