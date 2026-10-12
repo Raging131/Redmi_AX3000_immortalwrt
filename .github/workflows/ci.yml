@@ -137,6 +137,10 @@ jobs:
           name: dl
           path: dl/
 
+      - name: Download bin from artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: bin-qualcommax-ipq50xx
           path: bin/targets/qualcommax/ipq50xx/
 
       - name: Download core binary from artifacts
