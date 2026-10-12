@@ -58,6 +58,13 @@ jobs:
           ./scripts/feeds update -a
           ./scripts/feeds install -a
 
+      - name: Add extroot overlay files
+        run: |
+          mkdir -p files
+          cp -r openwrt-files/. files/
+          test -f files/lib/preinit/76_attach_extroot
+          ls -l files/etc/config/fstab
+
       - name: Configure
         run: |
           cat <<EOF | sed -E 's/^  //' >.config

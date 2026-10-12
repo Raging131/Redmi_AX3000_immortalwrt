@@ -1,0 +1,11 @@
+# Attach the spare "overlay" mtd as UBI before mount_root evaluates extroot.
+# Volume becomes /dev/ubi1_0 (ubi0 is the booted rootfs UBI), matching
+# /etc/config/fstab's is_rootfs entry.
+attach_extroot_volume() {
+	local idx
+	[ -e /dev/ubi1_0 ] && return 0
+	idx=$(sed -n 's/^\([0-9]*\):.*"overlay".*//p' /proc/mtd | head -n1)
+	[ -n "$idx" ] || return 0
+	ubiattach -m "$idx" >/dev/null 2>&1
+}
+boot_hook_add preinit_essential attach_extroot_volume
