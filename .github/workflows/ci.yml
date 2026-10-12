@@ -48,6 +48,10 @@ jobs:
           git clone --depth=1 https://github.com/vernesong/OpenClash.git /tmp/oc
           cp -r /tmp/oc/luci-app-openclash package/openclash
           test -f package/openclash/Makefile
+          # slim: these are re-downloadable at runtime (GeoSite.dat ~10MB, dashboards ~12MB)
+          rm -f package/openclash/root/etc/openclash/GeoSite.dat
+          rm -rf package/openclash/root/usr/share/openclash/ui
+          du -sh package/openclash/root | cat
 
       - name: Update and install feeds
         run: |
@@ -185,6 +189,7 @@ jobs:
           body_path: Body.md
           files: |
             bin/targets/qualcommax/ipq50xx/sha256sums
+            bin/targets/qualcommax/ipq50xx/clash_meta
             bin/targets/qualcommax/ipq50xx/*.*
 
   gh-pages:
